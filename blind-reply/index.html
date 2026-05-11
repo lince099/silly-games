@@ -598,6 +598,23 @@
     <button class="btn" style="margin-top:1rem" onclick="document.getElementById('reveal-link-section').style.display='block'">I have their link</button>
   </div>
 
+  <!-- P2 DONE -->
+  <div id="screen-p2done" class="screen">
+    <div class="hero-tag">you're done!</div>
+    <h2>Send the reveal link back</h2>
+    <p>Copy this link and send it to <strong id="p2done-p1name"></strong> — it has both your answers and theirs. Whoever opens it sees the big reveal!</p>
+
+    <div class="share-box">
+      <div class="link-display" id="p2done-link"></div>
+      <button class="btn btn-primary" onclick="copyP2Link()">Copy link</button>
+      <div class="copy-feedback" id="p2done-copy-feedback"></div>
+    </div>
+
+    <div class="divider">or</div>
+
+    <button class="btn btn-warm btn-block" onclick="showReveal(window._revealPayload)">See the reveal yourself →</button>
+  </div>
+
   <!-- RESULTS -->
   <div id="screen-results" class="screen">
     <div class="results-header">
@@ -798,7 +815,7 @@ function finishAnswering() {
     showScreen('wait');
 
   } else {
-    // p2 done — build reveal link
+    // p2 done — build reveal link and show it clearly
     const payload = {
       p1: state.p1,
       p2: state.p2,
@@ -808,24 +825,11 @@ function finishAnswering() {
     };
     const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
     const link = window.location.origin + window.location.pathname + '#reveal=' + encoded;
-
-    // Show reveal share screen (repurpose wait screen)
-    document.getElementById('p2name-wait').textContent = state.p1;
-    document.getElementById('p2name-wait2').textContent = state.p1;
-    document.getElementById('share-link-display').textContent = link;
     window._shareLink = link;
-
-    // Change messaging for p2
-    document.querySelector('#screen-wait h2').textContent = 'Send back the reveal!';
-    document.querySelector('#screen-wait p').innerHTML =
-      `Copy this link and send it back to <strong>${state.p1}</strong> — it has both your answers!`;
-    document.querySelector('#screen-wait .divider').textContent = 'or open it yourself';
-    document.getElementById('reveal-link-section').style.display = 'none';
-
-    showScreen('wait');
-
-    // Also open reveal directly
-    setTimeout(() => showReveal(payload), 100);
+    window._revealPayload = payload;
+    showScreen('p2done');
+    document.getElementById('p2done-p1name').textContent = state.p1;
+    document.getElementById('p2done-link').textContent = link;
   }
 }
 
@@ -834,6 +838,14 @@ function copyLink() {
   const link = window._shareLink || document.getElementById('share-link-display').textContent;
   navigator.clipboard.writeText(link).then(() => {
     const fb = document.getElementById('copy-feedback');
+    fb.textContent = '✓ copied to clipboard';
+    setTimeout(() => fb.textContent = '', 2000);
+  });
+}
+
+function copyP2Link() {
+  navigator.clipboard.writeText(window._shareLink).then(() => {
+    const fb = document.getElementById('p2done-copy-feedback');
     fb.textContent = '✓ copied to clipboard';
     setTimeout(() => fb.textContent = '', 2000);
   });
