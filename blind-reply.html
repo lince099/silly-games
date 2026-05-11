@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blind Reply · silly games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f5f0e8;
+    --ink: #1a1610;
+    --warm: #b85c2a;
+    --gold: #c9963a;
+    --blush: #e8d5c4;
+    --muted: #7a6e62;
+    --green: #3a6b4a;
+    --border: 2px solid var(--ink);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 4rem;
+  }
+
+  /* noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  header {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 3rem;
+    padding-bottom: 1rem;
+    border-bottom: var(--border);
+  }
+
+  .site-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    text-decoration: none;
+  }
+
+  .site-title span { color: var(--warm); font-style: italic; }
+
+  #app {
+    width: 100%;
+    max-width: 640px;
+  }
+
+  /* ---- SCREENS ---- */
+  .screen { display: none; animation: fadeIn 0.4s ease; }
+  .screen.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---- TYPOGRAPHY ---- */
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 6vw, 3.5rem);
+    line-height: 1.1;
+    margin-bottom: 1rem;
+  }
+
+  h1 em { color: var(--warm); font-style: italic; }
+
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    margin-bottom: 0.5rem;
+  }
+
+  p { line-height: 1.7; color: var(--muted); font-size: 0.9rem; }
+
+  .label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+
+  /* ---- BUTTONS ---- */
+  .btn {
+    display: inline-block;
+    padding: 0.75rem 1.75rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: var(--border);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    background: transparent;
+    color: var(--ink);
+    letter-spacing: 0.05em;
+  }
+
+  .btn:hover { background: var(--ink); color: var(--cream); }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--cream);
+  }
+  .btn-primary:hover { background: var(--warm); border-color: var(--warm); }
+
+  .btn-warm {
+    background: var(--warm);
+    color: var(--cream);
+    border-color: var(--warm);
+  }
+  .btn-warm:hover { background: var(--gold); border-color: var(--gold); }
+
+  .btn-green {
+    background: var(--green);
+    color: var(--cream);
+    border-color: var(--green);
+  }
+  .btn-green:hover { opacity: 0.85; }
+
+  .btn-block { display: block; width: 100%; text-align: center; }
+
+  /* ---- INPUTS ---- */
+  input[type="text"], textarea {
+    width: 100%;
+    padding: 0.75rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    border: var(--border);
+    background: white;
+    color: var(--ink);
+    outline: none;
+    transition: box-shadow 0.15s;
+  }
+  input[type="text"]:focus, textarea:focus {
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* ---- CARDS ---- */
+  .card {
+    border: var(--border);
+    padding: 1.5rem;
+    background: white;
+    margin-bottom: 1rem;
+  }
+
+  .card-accent {
+    border-left: 5px solid var(--warm);
+  }
+
+  /* ---- HOME SCREEN ---- */
+  .hero-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    background: var(--warm);
+    color: white;
+    padding: 0.25rem 0.6rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .how-it-works {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+
+  .step {
+    border: var(--border);
+    padding: 1.25rem 1rem;
+    text-align: center;
+    background: white;
+    position: relative;
+  }
+
+  .step-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    font-style: italic;
+    color: var(--blush);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .step p { font-size: 0.8rem; }
+
+  /* ---- CREATE SCREEN ---- */
+  .question-builder {
+    border: var(--border);
+    padding: 1.5rem;
+    background: white;
+    margin-bottom: 1.5rem;
+  }
+
+  .q-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .q-num {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.3rem;
+    color: var(--muted);
+    width: 1.5rem;
+    flex-shrink: 0;
+    padding-top: 0.6rem;
+  }
+
+  .q-delete {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0.6rem 0.3rem;
+    flex-shrink: 0;
+    transition: color 0.15s;
+  }
+  .q-delete:hover { color: var(--warm); }
+
+  .add-q-btn {
+    background: none;
+    border: 2px dashed var(--muted);
+    width: 100%;
+    padding: 0.7rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+  .add-q-btn:hover { border-color: var(--warm); color: var(--warm); }
+
+  .name-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .name-row > div { flex: 1; }
+
+  /* ---- ANSWER SCREEN ---- */
+  .progress-bar {
+    width: 100%;
+    height: 3px;
+    background: var(--blush);
+    margin-bottom: 2rem;
+    position: relative;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--warm);
+    transition: width 0.3s ease;
+  }
+
+  .q-counter {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .answer-box {
+    border: var(--border);
+    padding: 1.5rem;
+    background: white;
+    margin-bottom: 1rem;
+  }
+
+  .q-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    margin-bottom: 1.25rem;
+    line-height: 1.3;
+  }
+
+  .nav-btns {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .answered-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--green);
+    color: white;
+    padding: 0.15rem 0.5rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+
+  /* ---- WAIT SCREEN ---- */
+  .share-box {
+    border: var(--border);
+    padding: 1.5rem;
+    background: white;
+    margin: 1.5rem 0;
+  }
+
+  .link-display {
+    font-size: 0.75rem;
+    word-break: break-all;
+    color: var(--muted);
+    background: var(--cream);
+    padding: 0.75rem;
+    border: 1px dashed var(--muted);
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+  }
+
+  .copy-feedback {
+    font-size: 0.75rem;
+    color: var(--green);
+    height: 1.2em;
+    transition: opacity 0.3s;
+  }
+
+  /* ---- RESULTS SCREEN ---- */
+  .results-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: var(--border);
+  }
+
+  .player-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .player-col-head {
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding-bottom: 0.5rem;
+    border-bottom: var(--border);
+    margin-bottom: 1rem;
+    font-weight: 500;
+  }
+
+  .result-item {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--blush);
+  }
+
+  .result-q {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    margin-bottom: 0.75rem;
+    font-style: italic;
+    color: var(--muted);
+  }
+
+  .answer-pill {
+    background: var(--cream);
+    border: var(--border);
+    padding: 0.6rem 0.9rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    min-height: 3rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .answer-pill.same {
+    border-color: var(--green);
+    background: #edf5f0;
+  }
+
+  .match-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: var(--green);
+    color: white;
+    padding: 0.1rem 0.4rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .score-box {
+    text-align: center;
+    border: var(--border);
+    padding: 2rem;
+    margin: 2rem 0;
+    background: var(--ink);
+    color: var(--cream);
+  }
+
+  .score-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 4rem;
+    font-style: italic;
+    color: var(--gold);
+    line-height: 1;
+    display: block;
+  }
+
+  .score-label { font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* ---- DIVIDER ---- */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    color: var(--muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--blush);
+  }
+
+  /* ---- TEMPLATES ---- */
+  .templates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .tmpl-btn {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--muted);
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    transition: all 0.15s;
+  }
+  .tmpl-btn:hover { border-color: var(--warm); color: var(--warm); }
+
+  /* responsive */
+  @media (max-width: 500px) {
+    .how-it-works { grid-template-columns: 1fr; }
+    .player-cols { grid-template-columns: 1fr; }
+    .name-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="../" class="site-title">silly <span>games</span></a>
+  <span class="site-title" style="color:var(--ink)">/ blind reply</span>
+</header>
+
+<div id="app">
+
+  <!-- HOME -->
+  <div id="screen-home" class="screen active">
+    <div class="hero-tag">a game for two</div>
+    <h1>Answer <em>blind,</em><br>reveal together.</h1>
+    <p>Both players answer the same questions independently — no peeking — then see each other's answers side by side. Share over WhatsApp, iMessage, anywhere.</p>
+
+    <div class="how-it-works">
+      <div class="step">
+        <div class="step-num">1</div>
+        <p>Write your questions & answer first</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <p>Share the link with your person</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <p>Both done? See the big reveal</p>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-block" onclick="showCreate()">Create a game →</button>
+  </div>
+
+  <!-- CREATE -->
+  <div id="screen-create" class="screen">
+    <h2>Build your game</h2>
+    <p style="margin-bottom:1.5rem">Write up to 10 questions. You'll answer first, then share with your person.</p>
+
+    <div class="name-row">
+      <div>
+        <span class="label">Your name</span>
+        <input type="text" id="p1name" placeholder="e.g. Marta" maxlength="30">
+      </div>
+      <div>
+        <span class="label">Their name</span>
+        <input type="text" id="p2name" placeholder="e.g. Leo" maxlength="30">
+      </div>
+    </div>
+
+    <span class="label">Quick templates</span>
+    <div class="templates">
+      <button class="tmpl-btn" onclick="loadTemplate('couples')">💑 Couples</button>
+      <button class="tmpl-btn" onclick="loadTemplate('friends')">🤝 Friends</button>
+      <button class="tmpl-btn" onclick="loadTemplate('silly')">🎲 Silly</button>
+      <button class="tmpl-btn" onclick="loadTemplate('deep')">🌊 Deep</button>
+    </div>
+
+    <div class="question-builder">
+      <span class="label">Your questions</span>
+      <div id="questions-list"></div>
+      <button class="add-q-btn" onclick="addQuestion()">+ add question</button>
+    </div>
+
+    <div style="display:flex;gap:0.75rem">
+      <button class="btn" onclick="showScreen('home')">← back</button>
+      <button class="btn btn-primary" style="flex:1" onclick="startGame()">Answer first →</button>
+    </div>
+  </div>
+
+  <!-- ANSWER (player 1 or 2) -->
+  <div id="screen-answer" class="screen">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+    <div class="q-counter" id="q-counter"></div>
+    <div class="answer-box">
+      <div class="q-text" id="current-question"></div>
+      <textarea id="current-answer" placeholder="Type your answer…" rows="4"></textarea>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn" id="prev-btn" onclick="prevQ()">← prev</button>
+      <button class="btn btn-primary" style="flex:1" id="next-btn" onclick="nextQ()">next →</button>
+    </div>
+
+    <div style="margin-top:1.5rem">
+      <button class="btn btn-warm btn-block" id="finish-btn" onclick="finishAnswering()" style="display:none">Done — see results / share →</button>
+    </div>
+  </div>
+
+  <!-- WAIT / SHARE -->
+  <div id="screen-wait" class="screen">
+    <div class="hero-tag">you're done!</div>
+    <h2>Now send the link</h2>
+    <p>Copy this link and send it to <strong id="p2name-wait"></strong>. They'll answer without seeing your replies.</p>
+
+    <div class="share-box">
+      <div class="link-display" id="share-link-display"></div>
+      <button class="btn btn-primary" onclick="copyLink()">Copy link</button>
+      <div class="copy-feedback" id="copy-feedback"></div>
+    </div>
+
+    <div class="divider">when they're done</div>
+
+    <p style="margin-bottom:1rem">Once <strong id="p2name-wait2"></strong> has answered, they'll send you back a final link. Open it to see the reveal!</p>
+
+    <div id="reveal-link-section" style="display:none">
+      <div class="card card-accent">
+        <span class="label">Got a reveal link?</span>
+        <input type="text" id="reveal-link-input" placeholder="Paste it here…">
+        <button class="btn btn-green btn-block" style="margin-top:0.75rem" onclick="openRevealLink()">Open reveal →</button>
+      </div>
+    </div>
+
+    <button class="btn" style="margin-top:1rem" onclick="document.getElementById('reveal-link-section').style.display='block'">I have their link</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="screen-results" class="screen">
+    <div class="results-header">
+      <div class="hero-tag">the big reveal</div>
+      <h1 id="results-title">Results</h1>
+    </div>
+
+    <div class="score-box">
+      <span class="score-num" id="match-score">0</span>
+      <div class="score-label">questions matched</div>
+    </div>
+
+    <div id="results-list"></div>
+
+    <div class="divider">play again?</div>
+    <button class="btn btn-primary btn-block" onclick="showCreate()">New game →</button>
+  </div>
+
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────
+let state = {
+  p1: '', p2: '',
+  questions: [],
+  p1answers: [],
+  p2answers: [],
+  currentQ: 0,
+  role: null // 'p1' or 'p2'
+};
+
+const TEMPLATES = {
+  couples: [
+    "What's your favourite memory of us together?",
+    "What's one thing you wish we did more often?",
+    "Describe our relationship in three words.",
+    "What's something about me that still surprises you?",
+    "Where would you most want to travel with me?"
+  ],
+  friends: [
+    "What's the funniest thing we've done together?",
+    "What's one thing you've never told me?",
+    "If we could swap lives for a day, would you?",
+    "What's the weirdest habit of mine you've noticed?",
+    "What song reminds you of us?"
+  ],
+  silly: [
+    "Hot dog: sandwich or not a sandwich?",
+    "If you were a breakfast food, what would you be?",
+    "What's a hill you would absolutely die on?",
+    "Which Disney villain were you most like as a child?",
+    "What's a song you're embarrassed to love?"
+  ],
+  deep: [
+    "What's something you're genuinely afraid of?",
+    "What does your ideal life look like in 10 years?",
+    "What's a belief you used to hold that you've changed?",
+    "When do you feel most like yourself?",
+    "What's something you want to be remembered for?"
+  ]
+};
+
+// ─── SCREEN NAV ──────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function showCreate() {
+  state = { p1:'', p2:'', questions:[], p1answers:[], p2answers:[], currentQ:0, role:null };
+  renderQuestions();
+  showScreen('create');
+}
+
+// ─── QUESTION BUILDER ────────────────────────────────────────────────
+function renderQuestions() {
+  const list = document.getElementById('questions-list');
+  list.innerHTML = '';
+  state.questions.forEach((q, i) => {
+    const row = document.createElement('div');
+    row.className = 'q-row';
+    row.innerHTML = `
+      <span class="q-num">${i+1}.</span>
+      <input type="text" value="${escHtml(q)}" placeholder="Question ${i+1}"
+        oninput="state.questions[${i}]=this.value" style="flex:1">
+      <button class="q-delete" onclick="removeQuestion(${i})">×</button>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function addQuestion() {
+  if (state.questions.length >= 10) return alert('Max 10 questions!');
+  state.questions.push('');
+  renderQuestions();
+  // focus last input
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('#questions-list input');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }, 50);
+}
+
+function removeQuestion(i) {
+  state.questions.splice(i, 1);
+  renderQuestions();
+}
+
+function loadTemplate(key) {
+  state.questions = [...TEMPLATES[key]];
+  renderQuestions();
+}
+
+// ─── START GAME ──────────────────────────────────────────────────────
+function startGame() {
+  state.p1 = document.getElementById('p1name').value.trim() || 'Player 1';
+  state.p2 = document.getElementById('p2name').value.trim() || 'Player 2';
+  state.questions = state.questions.filter(q => q.trim() !== '');
+
+  if (state.questions.length < 1) return alert('Add at least one question!');
+
+  state.p1answers = new Array(state.questions.length).fill('');
+  state.role = 'p1';
+  state.currentQ = 0;
+  startAnswering();
+}
+
+// ─── ANSWER FLOW ─────────────────────────────────────────────────────
+function startAnswering() {
+  renderAnswerScreen();
+  showScreen('answer');
+}
+
+function renderAnswerScreen() {
+  const qs = state.questions;
+  const i = state.currentQ;
+  const answers = state.role === 'p1' ? state.p1answers : state.p2answers;
+  const name = state.role === 'p1' ? state.p1 : state.p2;
+
+  document.getElementById('q-counter').textContent =
+    `${name} · question ${i+1} of ${qs.length}`;
+  document.getElementById('current-question').textContent = qs[i];
+  document.getElementById('current-answer').value = answers[i] || '';
+
+  const pct = ((i) / qs.length) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+
+  document.getElementById('prev-btn').disabled = i === 0;
+
+  const isLast = i === qs.length - 1;
+  document.getElementById('next-btn').style.display = isLast ? 'none' : 'block';
+  document.getElementById('finish-btn').style.display = isLast ? 'block' : 'none';
+}
+
+function saveCurrentAnswer() {
+  const val = document.getElementById('current-answer').value;
+  if (state.role === 'p1') {
+    state.p1answers[state.currentQ] = val;
+  } else {
+    state.p2answers[state.currentQ] = val;
+  }
+}
+
+function nextQ() {
+  saveCurrentAnswer();
+  if (state.currentQ < state.questions.length - 1) {
+    state.currentQ++;
+    renderAnswerScreen();
+  }
+}
+
+function prevQ() {
+  saveCurrentAnswer();
+  if (state.currentQ > 0) {
+    state.currentQ--;
+    renderAnswerScreen();
+  }
+}
+
+function finishAnswering() {
+  saveCurrentAnswer();
+
+  if (state.role === 'p1') {
+    // Build the link for p2
+    const payload = {
+      p1: state.p1,
+      p2: state.p2,
+      questions: state.questions,
+      p1answers: state.p1answers
+    };
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    const link = window.location.origin + window.location.pathname + '#p2=' + encoded;
+
+    document.getElementById('p2name-wait').textContent = state.p2;
+    document.getElementById('p2name-wait2').textContent = state.p2;
+    document.getElementById('share-link-display').textContent = link;
+    window._shareLink = link;
+    showScreen('wait');
+
+  } else {
+    // p2 done — build reveal link
+    const payload = {
+      p1: state.p1,
+      p2: state.p2,
+      questions: state.questions,
+      p1answers: state.p1answers,
+      p2answers: state.p2answers
+    };
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    const link = window.location.origin + window.location.pathname + '#reveal=' + encoded;
+
+    // Show reveal share screen (repurpose wait screen)
+    document.getElementById('p2name-wait').textContent = state.p1;
+    document.getElementById('p2name-wait2').textContent = state.p1;
+    document.getElementById('share-link-display').textContent = link;
+    window._shareLink = link;
+
+    // Change messaging for p2
+    document.querySelector('#screen-wait h2').textContent = 'Send back the reveal!';
+    document.querySelector('#screen-wait p').innerHTML =
+      `Copy this link and send it back to <strong>${state.p1}</strong> — it has both your answers!`;
+    document.querySelector('#screen-wait .divider').textContent = 'or open it yourself';
+    document.getElementById('reveal-link-section').style.display = 'none';
+
+    showScreen('wait');
+
+    // Also open reveal directly
+    setTimeout(() => showReveal(payload), 100);
+  }
+}
+
+// ─── SHARE / COPY ─────────────────────────────────────────────────────
+function copyLink() {
+  const link = window._shareLink || document.getElementById('share-link-display').textContent;
+  navigator.clipboard.writeText(link).then(() => {
+    const fb = document.getElementById('copy-feedback');
+    fb.textContent = '✓ copied to clipboard';
+    setTimeout(() => fb.textContent = '', 2000);
+  });
+}
+
+function openRevealLink() {
+  const val = document.getElementById('reveal-link-input').value.trim();
+  if (!val) return;
+  // navigate to it
+  window.location.href = val;
+}
+
+// ─── RESULTS ─────────────────────────────────────────────────────────
+function showReveal(data) {
+  document.getElementById('results-title').textContent =
+    `${data.p1} & ${data.p2}`;
+
+  const list = document.getElementById('results-list');
+  list.innerHTML = '';
+
+  // header
+  const colHead = document.createElement('div');
+  colHead.className = 'player-cols';
+  colHead.innerHTML = `
+    <div class="player-col-head">${escHtml(data.p1)}</div>
+    <div class="player-col-head">${escHtml(data.p2)}</div>
+  `;
+  list.appendChild(colHead);
+
+  let matches = 0;
+
+  data.questions.forEach((q, i) => {
+    const a1 = (data.p1answers[i] || '').trim();
+    const a2 = (data.p2answers[i] || '').trim();
+    const isSame = a1.toLowerCase() === a2.toLowerCase() && a1 !== '';
+    if (isSame) matches++;
+
+    const item = document.createElement('div');
+    item.className = 'result-item';
+    item.innerHTML = `
+      <div class="result-q">${i+1}. ${escHtml(q)}</div>
+      ${isSame ? '<div class="match-tag">✓ match!</div>' : ''}
+      <div class="player-cols">
+        <div class="answer-pill${isSame?' same':''}">${escHtml(a1) || '<em style="color:var(--muted)">no answer</em>'}</div>
+        <div class="answer-pill${isSame?' same':''}">${escHtml(a2) || '<em style="color:var(--muted)">no answer</em>'}</div>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+
+  document.getElementById('match-score').textContent =
+    `${matches}/${data.questions.length}`;
+
+  showScreen('results');
+}
+
+// ─── ROUTING ─────────────────────────────────────────────────────────
+function handleHash() {
+  const hash = window.location.hash;
+
+  if (hash.startsWith('#p2=')) {
+    // Player 2 landing
+    try {
+      const encoded = hash.slice(4);
+      const payload = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+      state.p1 = payload.p1;
+      state.p2 = payload.p2;
+      state.questions = payload.questions;
+      state.p1answers = payload.p1answers;
+      state.p2answers = new Array(payload.questions.length).fill('');
+      state.role = 'p2';
+      state.currentQ = 0;
+
+      // Show a welcome for p2
+      showScreen('answer');
+      // Tweak header message
+      document.getElementById('q-counter').textContent =
+        `${state.p2} · answering ${state.questions.length} questions`;
+
+      // Small intro
+      const box = document.createElement('div');
+      box.className = 'card card-accent';
+      box.style.marginBottom = '1rem';
+      box.innerHTML = `<span class="label">You're playing with ${escHtml(state.p1)}</span>
+        <p>${escHtml(state.p1)} set up these questions. Answer honestly — they won't see your replies until you're both done!</p>`;
+      document.getElementById('screen-answer').insertBefore(box, document.querySelector('.progress-bar'));
+
+      renderAnswerScreen();
+    } catch(e) {
+      alert('Invalid link. Ask them to resend!');
+    }
+
+  } else if (hash.startsWith('#reveal=')) {
+    try {
+      const encoded = hash.slice(8);
+      const payload = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+      showReveal(payload);
+    } catch(e) {
+      alert('Invalid reveal link.');
+    }
+  }
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────
+// Start with some default questions in the builder
+state.questions = [
+  "What's something you've been thinking about a lot lately?",
+  "If you could change one thing about your daily routine, what would it be?",
+  "What's a small thing that makes you really happy?"
+];
+
+window.addEventListener('DOMContentLoaded', () => {
+  renderQuestions();
+  handleHash();
+});
+</script>
+</body>
+</html>
